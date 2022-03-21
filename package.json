@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/niccmac/tinyApp/issues"
   },
-  "homepage": "https://github.com/niccmac/tinyApp#readme"
+  "homepage": "https://github.com/niccmac/tinyApp#readme",
+  "dependencies": {
+    "express": "^4.17.3"
+  }
 }
