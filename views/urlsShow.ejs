@@ -8,18 +8,15 @@
 
 <body>
   <%- include('partials/_header') %>
+  
   <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">Short URL: <a href="<%= longURL %>"><%= shortURL %></a>
-        <br>
-        <form method="POST" action="/urls/<%= shortURL %>/edit">
-          <input type="text">
-          <button type="submit">Edit</button>
-        </form>
-        <br>
-        Create New:<a href="https://google.com" target="_blank"> TinyURL</a>
+        <p class="card-text">Short URL: <a href="<%= longURL %>" target="_blank"><%= shortURL %></a>
+        <hr>
+        <h3>EDIT URL</h3>
+          <form method="POST" action="/urls/<%= shortURL %>/edit">New URL: <input type="text" placeholder="<%= longURL %>" name="newURL"><button type="submit">Edit</button></form> 
       </p>
       </div>
     <div class="card-footer text-muted"></div>
