@@ -2,9 +2,9 @@
   "name": "tinyApp",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "expressServer.js.js",
   "scripts": {
-    "start": "./node_modules/.bin/nodemon -L express_server.js",
+    "start": "./node_modules/.bin/nodemon -L expressServer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
