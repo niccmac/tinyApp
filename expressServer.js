@@ -14,6 +14,15 @@ app.post("/urls", (req, res) => {
   console.log("req.body:", req.body);
   res.send("OK");// This will be replaced later.
 });
+const generateRandomString = () => {
+  const chara = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let string = "";
+  for (let i = 0; i < 6; i++) {
+    string += chara.charAt(Math.floor(Math.random() * chara.length));
+  }
+  return string;
+};
+
 app.get('/urls/new', (req, res) => {
   res.render("urlsNew");
 });
