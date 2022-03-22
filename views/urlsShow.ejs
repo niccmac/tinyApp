@@ -14,6 +14,11 @@
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
         <p class="card-text">Short URL: <a href="<%= longURL %>"><%= shortURL %></a>
         <br>
+        <form method="POST" action="/urls/<%= shortURL %>/edit">
+          <input type="text">
+          <button type="submit">Edit</button>
+        </form>
+        <br>
         Create New:<a href="https://google.com" target="_blank"> TinyURL</a>
       </p>
       </div>
