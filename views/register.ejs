@@ -11,11 +11,21 @@
 <body>
   <%- include('partials/_header') %>
   <form method="POST" action="/register">
-    <label>Email: </label>
-    <input type="email" name="email">
-    <br>
-    <label>Password: </label>
-    <input type="password" name="password">
+    <div class="row mb-3">
+      <label class="col-sm-1 col-form-label">Email: </label>
+      <div class="col-sm-5">
+        <input type="email" class="form-control" name="email">
+      </div>
+    </div>
+    <div class="row mb-3">
+      <label class="col-sm-1 col-form-label">Password: </label>
+      <div class="col-sm-5">
+        <input type="password" class="form-control" name="password">
+      </div>
+    </div>
+    <div class="d-grid gap-2 col-6 mx-auto">
+      <button type="submit" class="btn btn-light btn-lg"disabled>Register</button>
+    </div>
   </form>
   
 </body>
