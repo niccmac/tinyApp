@@ -34,6 +34,10 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></htmml>\n");
 });
 
+app.get("/register", (req, res) => {
+  res.render("register");
+});
+
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
