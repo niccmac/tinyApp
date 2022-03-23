@@ -52,11 +52,18 @@ app.get("/hello", (req, res) => {
 
 app.get("/register", (req, res) => {
   let email = req.cookies.email;
-  console.log("users:", users);
   const templateVars = {
     email: email
   };
   res.render("register", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  let email = req.cookies.email;
+  const templateVars = {
+    email: email
+  };
+  res.render("login", templateVars);
 });
 
 app.get("/urls", (req, res) => {
@@ -143,28 +150,26 @@ app.post("/logout", (req, res) => {
   res.clearCookie('username');
   res.redirect("/urls");
 });
-
+//REGISTER NEW USER
 app.post("/register", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
   if (email === "" ||
       password === "") {
     res.redirect("/*");
-  }
+  } //Checks if both form feilds are filled
   for (const userIDS in users) {
-    console.log("userIDS", userIDS);
-    console.log("userIDS.email", users[userIDS].email);
     if (users[userIDS].email === email) {
       res.redirect("/*");
     }
-  }
+  }//Checks if email already exisits
   let newID = generateRandomString();
   users[newID] = {
     id: newID,
     email,
     password,
-  };
-  res.cookie("user_id", newID);
+  };//Creates new user
+  res.cookie("user_id", newID);//Creates cookie with id same as new user reg.
   res.redirect("/urls");
 });
 
