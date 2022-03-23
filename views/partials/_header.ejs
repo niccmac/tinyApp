@@ -11,16 +11,15 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <% if(username){ %>
+    <% if(email){ %>
       <form method="POST" action="/logout">
       <div class="d-flex justify-content-between align-items-baseline" style="width: 225px;">
-          <p>Logged in as : <%= username %>
+          <p>Logged in as : <%= email %>
           </p><button type="submit" class="btn btn-outline-light">Log Out</button>
         </div>
       </form>
       <% } else {%>
         <form method="POST" action="/login">
-          <label for="username"></label>
           <input name="username" type="text" placeholder="username" id="username">
           <button type="submit" class="btn btn-outline-light">Login</button>
         </form>
