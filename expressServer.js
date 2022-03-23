@@ -35,7 +35,10 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  res.render("register");
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("register", templateVars);
 });
 
 app.get("/urls", (req, res) => {
@@ -48,17 +51,20 @@ app.get("/urls", (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  res.render("urlsNew");
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("urlsNew", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"]};
   res.render("urlsShow", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
   let url = urlDatabase[req.params.shortURL];
-  const templateVars = { shortURL: req.params.shortURL, longURL: url };
+  const templateVars = { shortURL: req.params.shortURL, longURL: url, username: req.cookies["username"] };
   res.redirect(templateVars.longURL);
 });
 
