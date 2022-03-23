@@ -99,6 +99,10 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+app.get("/*", (req, res) => {
+  res.render("error404");
+});
+
 
 //
 // CREATE
@@ -143,15 +147,24 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
+  if (email === "" ||
+      password === "") {
+    res.redirect("/*");
+  }
+  for (const userIDS in users) {
+    console.log("userIDS", userIDS);
+    console.log("userIDS.email", users[userIDS].email);
+    if (users[userIDS].email === email) {
+      res.redirect("/*");
+    }
+  }
   let newID = generateRandomString();
   users[newID] = {
     id: newID,
     email,
     password,
   };
-  console.log("users", users);
   res.cookie("user_id", newID);
-  console.log("new cookie:", res.cookie.user_id);
   res.redirect("/urls");
 });
 
