@@ -29,14 +29,25 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: "123"
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: "123"
   }
 };
+//
+//Functions
+//
+const findUserByEmail = (loginemail) => {
+  for (const userIDS in users) {
+    if (users[userIDS].email === loginemail) {
+      return users[userIDS];
+    }
+  }
+  return null;
+};//Checks if email already exisits
 
 
 //
@@ -68,11 +79,8 @@ app.get("/login", (req, res) => {
 
 app.get("/urls", (req, res) => {
   let getID = req.cookies.user_id;
-  
-  console.log("get id", getID);
-  console.log("users", users);
-  console.log("get usersid", users[getID]);
-  
+  const useremail = findUserByEmail(getID.email);
+  console.log("useremail:", useremail);
   const templateVars = {
     urls: urlDatabase,
     email: users[getID].email
@@ -141,8 +149,21 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  let username = req.body.username;
-  res.cookie('username', username);
+  console.log("res.body:", req.body.email);
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!email || !password) {
+    return res.send("Email or password cannot be blank.");
+  }
+  const user = findUserByEmail(email);
+  if (!user) {
+    return res.send("No user with this email address.");
+  }
+  if (user.password !== password) {
+    return res.send("Incorrect password.");
+  }
+  
+  res.cookie('user_id', user.id);
   res.redirect('/urls');
 });
 
