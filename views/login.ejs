@@ -6,25 +6,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" 
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-    <title>Log In</title>
+    <title>Log In - TinyApp Example</title>
 </head>
 <body>
   <%- include('partials/_header') %>
   <br>
+  <h2>Login</h2>
+  <br>
   <form method="POST" action="/login">
     <div class="row mb-3">
-      <label class="col-sm-1 col-form-label"> Email: </label>
+      <label class="col-sm-2 col-form-label"> Email: </label>
       <div class="col-sm-5">
         <input type="email" class="form-control" name="email">
       </div>
     </div>
     <div class="row mb-3">
-      <label class="col-sm-1 col-form-label">Password: </label>
+      <label class="col-sm-2 col-form-label">Password: </label>
       <div class="col-sm-5">
         <input type="password" class="form-control" name="password">
       </div>
     </div>
-    <div class="d-grid gap-2 col-6 mx-auto">
+    <div class="d-grid gap-2 col-5 mx-auto">
       <button type="submit" class="btn btn-light btn-lg">Log In</button>
     </div>
   </form>

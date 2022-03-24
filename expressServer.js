@@ -78,12 +78,11 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let getID = req.cookies.user_id;
-  const useremail = findUserByEmail(getID.email);
-  console.log("useremail:", useremail);
+  let userCoookieID = req.cookies.user_id;
+  let email = users[userCoookieID].email;
   const templateVars = {
     urls: urlDatabase,
-    email: users[getID].email
+    email: email
   };
 
   res.render("urlsIndex", templateVars);
@@ -149,18 +148,17 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  console.log("res.body:", req.body.email);
   const email = req.body.email;
   const password = req.body.password;
   if (!email || !password) {
-    return res.send("Email or password cannot be blank.");
+    return res.send("Email or password cannot be blank. Error: Status code 403");
   }
   const user = findUserByEmail(email);
   if (!user) {
-    return res.send("No user with this email address.");
+    return res.send("Error: Status code 403 E");
   }
   if (user.password !== password) {
-    return res.send("Incorrect password.");
+    return res.send("Error: Status code 403 P.");
   }
   
   res.cookie('user_id', user.id);
@@ -168,8 +166,8 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
-  res.redirect("/urls");
+  res.clearCookie('user_id');
+  res.redirect("/login");
 });
 //REGISTER NEW USER
 app.post("/register", (req, res) => {
@@ -183,7 +181,7 @@ app.post("/register", (req, res) => {
     if (users[userIDS].email === email) {
       res.redirect("/*");
     }
-  }//Checks if email already exisits
+  }//Checks if email already exisits  should use function ****FIX LATER
   let newID = generateRandomString();
   users[newID] = {
     id: newID,

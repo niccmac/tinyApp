@@ -9,21 +9,27 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <a class="nav-item nav-link" href="/register">Register at TinyApp!</a>
+        
       </div>
     </div>
     
      <% if(email){ %>
       <form method="POST" action="/logout">
-      <div class="d-flex justify-content-between align-items-baseline" style="width: 250px;">
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup" style="width: 250px;">
+        <div class="navbar-nav">
           <p>Logged in as : <%= email %>
           </p><button type="submit" class="btn btn-outline-light">Log Out</button>
+          </div>
         </div>
       </form>
       <% } else {%>
-        <form method="POST" action="/login">
-          <!-- <input name="username" type="text" placeholder="username" id="username"> -->
-          <button type="submit" class="btn btn-outline-light">Login</button>
+        <form method="POST" >
+          <div class="collapse navbar-collapse" id="navbarNavAltMarkup" style="width: 150px;">
+          <div class="navbar-nav">
+            <a class="nav-item nav-link" href="login">Login</a>
+            <a class="nav-item nav-link" href="/register">Register</a>
+          </div>
+          </div>
         </form>
         <% } %>
   </nav>
