@@ -3,7 +3,7 @@ const app = express();
 const PORT = 8080; // Default port 8080
 const bodyParser = require("body-parser"); //Makes buffer data human readable - middleware.
 const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const salt = bcrypt.genSaltSync(10);
 
@@ -17,12 +17,19 @@ app.set("view engine", "ejs");
 
 
 
+
 //
 // MIDDLEWARE
 //
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(morgan('dev'));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ["password", "cookie", "lighthouse", "other", "otherother"],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 
 
 
@@ -58,7 +65,8 @@ const users = {
 //Functions
 //
 
-const urlsForUser = (loginid) => {
+
+const urlsForUser = (loginid, urlDatabase) => {
   let matchingURLS = [];
   for (const shorturl in urlDatabase) {
     if (urlDatabase[shorturl].userID === loginid) {
@@ -67,11 +75,10 @@ const urlsForUser = (loginid) => {
   }
   return matchingURLS;
 };
-
-const findUserByEmail = (loginemail) => {
-  for (const userIDS in users) {
-    if (users[userIDS].email === loginemail) {
-      return users[userIDS];
+const findUserByEmail = (loginemail, database) => {
+  for (const userIDS in database) {
+    if (database[userIDS].email === loginemail) {
+      return database[userIDS];
     }
   }
   return null;
@@ -96,7 +103,7 @@ const generateRandomString = () => {
 
 //hello routes
 app.get("/", (req, res) => {
-  let email = req.cookies.email;
+  let email = req.session.email;
   const templateVars = {
     message: "Hello, welcome to TinyApp!",
     email: email
@@ -105,7 +112,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/hello", (req, res) => {
-  let email = req.cookies.email;
+  let email = req.session.email;
   const templateVars = {
     message: "Hello World",
     email: email
@@ -118,7 +125,7 @@ app.get("/hello", (req, res) => {
 
 //Register routes
 app.get("/register", (req, res) => {
-  let email = req.cookies.email;
+  let email = req.session.email;
   const templateVars = {
     email: email
   };
@@ -151,17 +158,24 @@ app.post("/register", (req, res) => {
     email,
     password: bcrypt.hashSync(password, salt)
   };//Creates new user
-  res.cookie("user_id", newID);//Creates cookie with id same as new user reg.
+  // req.session.user_id = (newID);//Creates session cookie with id same as new user reg.
   res.redirect("/urls");
 });
 
 ///login routes
 app.get("/login", (req, res) => {
-  let email = req.cookies.email;
+  if (req.session) {
+    let email = req.session.email;
+    const templateVars = {
+      email: email
+    };
+    return res.render("login", templateVars);
+  }
   const templateVars = {
-    email: email
+    email: null
   };
   res.render("login", templateVars);
+  
 });
 
 app.post("/login", (req, res) => {
@@ -174,7 +188,7 @@ app.post("/login", (req, res) => {
     };
     res.render("textpages", templateVars);
   }
-  const user = findUserByEmail(email);
+  const user = findUserByEmail(email, users);
   if (!user) {
     const templateVars = {
       message: "Error: Status code 401 Email not registered.",
@@ -190,13 +204,13 @@ app.post("/login", (req, res) => {
     res.render("textpages", templateVars);
   }
   
-  res.cookie('user_id', user.id);
+  req.session.user_id = user.id;//sending back encrypted cookie
   res.redirect('/urls');
 });
 
-//login route
+//logout route
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect("/login");
 });
 
@@ -204,7 +218,7 @@ app.post("/logout", (req, res) => {
 
 ///urls routes
 app.get("/urls", (req, res) => {
-  let userCoookieID = req.cookies.user_id;
+  let userCoookieID = req.session.user_id;
   for (const knownID in users) {
     if (userCoookieID === knownID) {
       let email = users[userCoookieID].email;
@@ -231,7 +245,7 @@ app.post("/urls", (req, res) => {
   let newShort = generateRandomString();
   urlDatabase[newShort] = {
     longURL: newLong,
-    userID: req.cookies.user_id
+    userID: req.session.user_id
   };
   res.redirect(`/urls/${newShort}`);
 });
@@ -239,9 +253,9 @@ app.post("/urls", (req, res) => {
 //urls new routes
 
 app.get('/urls/new', (req, res) => {
-  let getID = req.cookies.user_id;
-  if (req.cookies.user_id) {
-    const user = users[req.cookies.user_id];
+  let getID = req.session.user_id;
+  if (req.session.user_id) {
+    const user = users[req.session.user_id];
     const templateVars = {
       email: user.email
     };
@@ -255,7 +269,7 @@ app.get('/urls/new', (req, res) => {
 
 //urls short routes //this is catching users who try to login from the URLS page, dont know how to fix
 app.get("/urls/:shortURL", (req, res) => {
-  let getID = req.cookies.user_id;
+  let getID = req.session.user_id;
   let tinyURL = req.params.shortURL;
   for (const knownID in users) {
     if (getID === knownID) {
@@ -290,8 +304,8 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const currentUserID = req.cookies.user_id;
-  const checkUserCanDelete = urlsForUser(currentUserID);
+  const currentUserID = req.session.user_id;
+  const checkUserCanDelete = urlsForUser(currentUserID, urlDatabase);
   for (const validURL of checkUserCanDelete) {
     if (validURL === req.params.shortURL) {
       delete urlDatabase[req.params.shortURL];
