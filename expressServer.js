@@ -4,6 +4,10 @@ const PORT = 8080; // Default port 8080
 const bodyParser = require("body-parser"); //Makes buffer data human readable - middleware.
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+const salt = bcrypt.genSaltSync(10);
+
+
 const { get } = require("express/lib/response"); //Dont remember writing this line :(
 
 //config
@@ -145,7 +149,7 @@ app.post("/register", (req, res) => {
   users[newID] = {
     id: newID,
     email,
-    password,
+    password: bcrypt.hashSync(password, salt)
   };//Creates new user
   res.cookie("user_id", newID);//Creates cookie with id same as new user reg.
   res.redirect("/urls");
@@ -178,7 +182,7 @@ app.post("/login", (req, res) => {
     };
     res.render("textpages", templateVars);
   }
-  if (user.password !== password) {
+  if (bcrypt.compareSync(user.password, password)) {
     const templateVars = {
       message: "Error: Status code 401 Password.",
       email: email
@@ -236,25 +240,15 @@ app.post("/urls", (req, res) => {
 
 app.get('/urls/new', (req, res) => {
   let getID = req.cookies.user_id;
-  if (!users[getID]) {
+  if (req.cookies.user_id) {
+    const user = users[req.cookies.user_id];
     const templateVars = {
-      message: "Try logging in to create new TinyURL. Error: Status code 401.",
-      email: null
+      email: user.email
     };
-    res.render("textpages", templateVars);
+    res.render("urlsNew", templateVars);
+  } else {
+    res.redirect("/login");
   }
-  let email = users[getID].email;
-  if (findUserByEmail(email) === null) {
-    const templateVars = {
-      message: "Try logging in to create new TinyURL. Error: Status code 401.",
-      email: null
-    };
-    res.render("textpages", templateVars);
-  }
-  const templateVars = {
-    email: email
-  };
-  res.render("urlsNew", templateVars);
 });
 
 
