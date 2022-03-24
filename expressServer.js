@@ -4,7 +4,13 @@ const PORT = 8080; // Default port 8080
 const bodyParser = require("body-parser"); //Makes buffer data human readable - middleware.
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
-const { get } = require("express/lib/response");
+const { get } = require("express/lib/response"); //Dont remember writing this line :(
+
+//config
+app.set("view engine", "ejs");
+
+
+
 
 
 //
@@ -14,10 +20,12 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(morgan('dev'));
 app.use(cookieParser());
 
+
+
+
 //
-// DATABASE
+// DATABASES
 //
-app.set("view engine", "ejs"); //fix
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
@@ -28,10 +36,6 @@ const urlDatabase = {
     userID: "userRandomID"
   }
 };
-
-//
-//USER DATABASE
-//
 const users = {
   "userRandomID": {
     id: "userRandomID",
@@ -59,6 +63,7 @@ const urlsForUser = (loginid) => {
   }
   return matchingURLS;
 };
+
 const findUserByEmail = (loginemail) => {
   for (const userIDS in users) {
     if (users[userIDS].email === loginemail) {
@@ -66,20 +71,48 @@ const findUserByEmail = (loginemail) => {
     }
   }
   return null;
-};//Checks if email already exisits
+};
+
+const generateRandomString = () => {
+  const chara = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let string = "";
+  for (let i = 0; i < 6; i++) {
+    string += chara.charAt(Math.floor(Math.random() * chara.length));
+  }
+  return string;
+};
+
+
+
 
 
 //
 // ROUTES
 //
+
+//hello routes
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  let email = req.cookies.email;
+  const templateVars = {
+    message: "Hello, welcome to TinyApp!",
+    email: email
+  };
+  res.render("textpages", templateVars);
 });
 
 app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></htmml>\n");
+  let email = req.cookies.email;
+  const templateVars = {
+    message: "Hello World",
+    email: email
+  };
+  res.render("textpages", templateVars);
 });
 
+
+
+
+//Register routes
 app.get("/register", (req, res) => {
   let email = req.cookies.email;
   const templateVars = {
@@ -88,6 +121,37 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
+app.post("/register", (req, res) => {
+  let email = req.body.email;
+  let password = req.body.password;
+  if (email === "" ||
+      password === "") {
+    const templateVars = {
+      message: "Error: Status code 401. Please enter Email & Password.",
+      email: email
+    };
+    res.render("textpages", templateVars);
+  }
+  for (const userIDS in users) {
+    if (users[userIDS].email === email) {
+      const templateVars = {
+        message: "Error: Status code 401. Email is already registered.",
+        email: email
+      };
+      res.render("textpages", templateVars);
+    }
+  }
+  let newID = generateRandomString();
+  users[newID] = {
+    id: newID,
+    email,
+    password,
+  };//Creates new user
+  res.cookie("user_id", newID);//Creates cookie with id same as new user reg.
+  res.redirect("/urls");
+});
+
+///login routes
 app.get("/login", (req, res) => {
   let email = req.cookies.email;
   const templateVars = {
@@ -96,6 +160,45 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!email || !password) {
+    const templateVars = {
+      message: "Email or password cannot be blank. Error: Status code 401",
+      email: null
+    };
+    res.render("textpages", templateVars);
+  }
+  const user = findUserByEmail(email);
+  if (!user) {
+    const templateVars = {
+      message: "Error: Status code 401 Email not registered.",
+      email: email
+    };
+    res.render("textpages", templateVars);
+  }
+  if (user.password !== password) {
+    const templateVars = {
+      message: "Error: Status code 401 Password.",
+      email: email
+    };
+    res.render("textpages", templateVars);
+  }
+  
+  res.cookie('user_id', user.id);
+  res.redirect('/urls');
+});
+
+//login route
+app.post("/logout", (req, res) => {
+  res.clearCookie('user_id');
+  res.redirect("/login");
+});
+
+
+
+///urls routes
 app.get("/urls", (req, res) => {
   let userCoookieID = req.cookies.user_id;
   for (const knownID in users) {
@@ -108,17 +211,45 @@ app.get("/urls", (req, res) => {
       return res.render("urlsIndex", templateVars);
     }
   }
-  return res.send("Must be logged in to view. Error: Status code 401.");
+  const templateVars = {
+    message: "Must be logged in to view. Error: Status code 401.",
+    email: null
+  };
+  res.render("textpages", templateVars);
 });
+
+
+app.post("/urls", (req, res) => {
+  let newLong = req.body.longURL;
+  if (!newLong) {
+    return res.redirect("/urls/new");
+  }
+  let newShort = generateRandomString();
+  urlDatabase[newShort] = {
+    longURL: newLong,
+    userID: req.cookies.user_id
+  };
+  res.redirect(`/urls/${newShort}`);
+});
+
+//urls new routes
 
 app.get('/urls/new', (req, res) => {
   let getID = req.cookies.user_id;
   if (!users[getID]) {
-    return res.redirect("Try logging in to create new TinyURL. Error: Status code 401.");
+    const templateVars = {
+      message: "Try logging in to create new TinyURL. Error: Status code 401.",
+      email: null
+    };
+    res.render("textpages", templateVars);
   }
   let email = users[getID].email;
   if (findUserByEmail(email) === null) {
-    return res.redirect("/login");
+    const templateVars = {
+      message: "Try logging in to create new TinyURL. Error: Status code 401.",
+      email: null
+    };
+    res.render("textpages", templateVars);
   }
   const templateVars = {
     email: email
@@ -126,6 +257,9 @@ app.get('/urls/new', (req, res) => {
   res.render("urlsNew", templateVars);
 });
 
+
+
+//urls short routes
 app.get("/urls/:shortURL", (req, res) => {
   let getID = req.cookies.user_id;
   let tinyURL = req.params.shortURL;
@@ -135,9 +269,12 @@ app.get("/urls/:shortURL", (req, res) => {
       res.render("urlsShow", templateVars);
     }
   }
-  return res.send("Must be logged in to view. Error: Status code 401.");
+  const templateVars = {
+    message: "Must be logged in to view. Error: Status code 401.",
+    email: null
+  };
+  res.render("textpages", templateVars);
 
-  
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -149,45 +286,6 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(templateVars.longURL);
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-
-app.get("/*", (req, res) => {
-  res.render("error404");
-});
-
-
-//
-// CREATE
-//
-
-const generateRandomString = () => {
-  const chara = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let string = "";
-  for (let i = 0; i < 6; i++) {
-    string += chara.charAt(Math.floor(Math.random() * chara.length));
-  }
-  return string;
-};
-app.post("/urls", (req, res) => {
-  let newLong = req.body.longURL;
-  if (!newLong) {
-    // res.send("Must enter URL.");
-    return res.redirect("/urls/new");
-  }
-  let newShort = generateRandomString();
-  urlDatabase[newShort] = {
-    longURL: newLong,
-    userID: req.cookies.user_id
-  };
-  res.redirect(`/urls/${newShort}`);
-});
-
-//
-//UPDATE
-//
 app.post("/urls/:shortURL/edit", (req, res) => {
   const { shortURL} = req.params;
   console.log("short url:", urlDatabase[shortURL]);
@@ -197,54 +295,6 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   res.redirect('/urls');
 });
 
-app.post("/login", (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  if (!email || !password) {
-    return res.send("Email or password cannot be blank. Error: Status code 401");
-  }
-  const user = findUserByEmail(email);
-  if (!user) {
-    return res.send("Error: Status code 401 Email not registered.");
-  }
-  if (user.password !== password) {
-    return res.send("Error: Status code 401 Password.");
-  }
-  
-  res.cookie('user_id', user.id);
-  res.redirect('/urls');
-});
-
-app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
-  res.redirect("/login");
-});
-//REGISTER NEW USER
-app.post("/register", (req, res) => {
-  let email = req.body.email;
-  let password = req.body.password;
-  if (email === "" ||
-      password === "") {
-    res.send("Error: Status code 401. Please enter Email & Password.");
-  } //Checks if both form feilds are filled
-  for (const userIDS in users) {
-    if (users[userIDS].email === email) {
-      res.send("Error: Status code 401. Email is already registered. ");
-    }
-  }//Checks if email already exisits  should use function ****FIX LATER
-  let newID = generateRandomString();
-  users[newID] = {
-    id: newID,
-    email,
-    password,
-  };//Creates new user
-  res.cookie("user_id", newID);//Creates cookie with id same as new user reg.
-  res.redirect("/urls");
-});
-
-//
-//DELETE
-//
 app.post("/urls/:shortURL/delete", (req, res) => {
   const currentUserID = req.cookies.user_id;
   const checkUserCanDelete = urlsForUser(currentUserID);
@@ -254,8 +304,24 @@ app.post("/urls/:shortURL/delete", (req, res) => {
       res.redirect("/urls");
     }
   }
-  return res.send("Error: Status code 403. Not authorised to this user.");
+  const templateVars = {
+    message: "Error: Status code 403. Not authorised to this user.",
+    email: null
+  };
+  res.render("textpages", templateVars);
 });
+
+//urls with json
+
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
+});
+
+//catch error
+app.get("/*", (req, res) => {
+  res.render("error404");
+});
+
 
 //
 // LISTENING
