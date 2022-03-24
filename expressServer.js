@@ -108,13 +108,13 @@ app.get("/urls", (req, res) => {
       return res.render("urlsIndex", templateVars);
     }
   }
-  return res.send("Must be logged in to view.");
+  return res.send("Must be logged in to view. Error: Status code 401.");
 });
 
 app.get('/urls/new', (req, res) => {
   let getID = req.cookies.user_id;
   if (!users[getID]) {
-    return res.redirect("Try logging in to create new TinyURL.");
+    return res.redirect("Try logging in to create new TinyURL. Error: Status code 401.");
   }
   let email = users[getID].email;
   if (findUserByEmail(email) === null) {
@@ -135,7 +135,7 @@ app.get("/urls/:shortURL", (req, res) => {
       res.render("urlsShow", templateVars);
     }
   }
-  return res.send("Must be logged in to view.");
+  return res.send("Must be logged in to view. Error: Status code 401.");
 
   
 });
@@ -153,9 +153,6 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/401", (req, res) => {
-  res.render("error401");
-});
 
 app.get("/*", (req, res) => {
   res.render("error404");
@@ -204,14 +201,14 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   if (!email || !password) {
-    return res.send("Email or password cannot be blank. Error: Status code 403");
+    return res.send("Email or password cannot be blank. Error: Status code 401");
   }
   const user = findUserByEmail(email);
   if (!user) {
-    return res.send("Error: Status code 403 E");
+    return res.send("Error: Status code 401 Email not registered.");
   }
   if (user.password !== password) {
-    return res.send("Error: Status code 403 P.");
+    return res.send("Error: Status code 401 Password.");
   }
   
   res.cookie('user_id', user.id);
@@ -228,11 +225,11 @@ app.post("/register", (req, res) => {
   let password = req.body.password;
   if (email === "" ||
       password === "") {
-    res.redirect("/*");
+    res.send("Error: Status code 401. Please enter Email & Password.");
   } //Checks if both form feilds are filled
   for (const userIDS in users) {
     if (users[userIDS].email === email) {
-      res.redirect("/*");
+      res.send("Error: Status code 401. Email is already registered. ");
     }
   }//Checks if email already exisits  should use function ****FIX LATER
   let newID = generateRandomString();
@@ -257,7 +254,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
       res.redirect("/urls");
     }
   }
-  return res.send("Not authorised.");
+  return res.send("Error: Status code 403. Not authorised to this user.");
 });
 
 //
