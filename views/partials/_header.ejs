@@ -15,10 +15,10 @@
     
      <% if(email){ %>
       <form method="POST" action="/logout">
-        <div class="collapse navbar-collapse" id="navbarNavAltMarkup" style="width: 250px;">
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup" style="width: 350px;">
         <div class="navbar-nav">
-          <p>Logged in as : <%= email %>
-          </p><button type="submit" class="btn btn-outline-light">Log Out</button>
+          <label class="nav-item nav-link">Logged in as : <%= email %></label>
+          <button type="submit" class="btn-sm btn-outline-dark">Logout</button>
           </div>
         </div>
       </form>
