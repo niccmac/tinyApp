@@ -44,9 +44,21 @@ const users = {
     password: "123"
   }
 };
+
+
 //
 //Functions
 //
+
+const urlsForUser = (loginid) => {
+  let matchingURLS = [];
+  for (const shorturl in urlDatabase) {
+    if (urlDatabase[shorturl].userID === loginid) {
+      matchingURLS.push(shorturl);
+    }
+  }
+  return matchingURLS;
+};
 const findUserByEmail = (loginemail) => {
   for (const userIDS in users) {
     if (users[userIDS].email === loginemail) {
@@ -86,22 +98,23 @@ app.get("/login", (req, res) => {
 
 app.get("/urls", (req, res) => {
   let userCoookieID = req.cookies.user_id;
-  if (!userCoookieID) {
-    return res.redirect("/401");
+  for (const knownID in users) {
+    if (userCoookieID === knownID) {
+      let email = users[userCoookieID].email;
+      const templateVars = {
+        urls: urlDatabase,
+        email: email
+      };
+      return res.render("urlsIndex", templateVars);
+    }
   }
-
-  let email = users[userCoookieID].email;
-  const templateVars = {
-    urls: urlDatabase,
-    email: email
-  };
-  res.render("urlsIndex", templateVars);
+  return res.send("Must be logged in to view.");
 });
 
 app.get('/urls/new', (req, res) => {
   let getID = req.cookies.user_id;
   if (!users[getID]) {
-    return res.redirect("/401");
+    return res.redirect("Try logging in to create new TinyURL.");
   }
   let email = users[getID].email;
   if (findUserByEmail(email) === null) {
@@ -116,9 +129,15 @@ app.get('/urls/new', (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   let getID = req.cookies.user_id;
   let tinyURL = req.params.shortURL;
-  console.log("rulDSURL", urlDatabase[tinyURL]);
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[tinyURL].longURL, email: users[getID].email};
-  res.render("urlsShow", templateVars);
+  for (const knownID in users) {
+    if (getID === knownID) {
+      const templateVars = { shortURL: tinyURL, longURL: urlDatabase[tinyURL].longURL, email: users[getID].email};
+      res.render("urlsShow", templateVars);
+    }
+  }
+  return res.send("Must be logged in to view.");
+
+  
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -230,8 +249,15 @@ app.post("/register", (req, res) => {
 //DELETE
 //
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls");
+  const currentUserID = req.cookies.user_id;
+  const checkUserCanDelete = urlsForUser(currentUserID);
+  for (const validURL of checkUserCanDelete) {
+    if (validURL === req.params.shortURL) {
+      delete urlDatabase[req.params.shortURL];
+      res.redirect("/urls");
+    }
+  }
+  return res.send("Not authorised.");
 });
 
 //
