@@ -259,7 +259,7 @@ app.get('/urls/new', (req, res) => {
 
 
 
-//urls short routes
+//urls short routes //this is catching users who try to login from the URLS page, dont know how to fix
 app.get("/urls/:shortURL", (req, res) => {
   let getID = req.cookies.user_id;
   let tinyURL = req.params.shortURL;
@@ -270,7 +270,7 @@ app.get("/urls/:shortURL", (req, res) => {
     }
   }
   const templateVars = {
-    message: "Must be logged in to view. Error: Status code 401.",
+    message: "Must be logged in to view... Error: Status code 401.",
     email: null
   };
   res.render("textpages", templateVars);
