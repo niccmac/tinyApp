@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" 
+    integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <title>URL - TinyApp Example</title>
 </head>
 
 <body>
   <%- include('partials/_header') %>
   
-  <div class="card text-center">
+  <div class="card">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">Short URL: <a href="<%= longURL %>" target="_blank"><%= shortURL %></a>
-        <hr>
-        <h3>EDIT URL</h3>
+        <h3>TinyURL</h3>
+        <p class="card-text"><strong>Short URL:</strong> <a href="<%= longURL %>" target="_blank"><%= shortURL %></a>
+          <h6 class="card-title">Current URL: <%= longURL %></h6>
+          <br>
+          <br>
+          <h6>Edit your current URL.</h6>
           <form method="POST" action="/urls/<%= shortURL %>/edit">New URL: <input type="text" placeholder="<%= longURL %>" name="newURL"><button type="submit">Edit</button></form> 
       </p>
       </div>
