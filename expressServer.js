@@ -2,18 +2,15 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // Default port 8080
 const bodyParser = require("body-parser"); //Makes buffer data human readable - middleware.
-const morgan = require('morgan');
-const cookieSession = require('cookie-session');
-const bcrypt = require('bcryptjs');
-const salt = bcrypt.genSaltSync(10);
+const morgan = require('morgan'); //records gets and pushes
+const cookieSession = require('cookie-session'); //encryps cookies res, req and "limits session"
+const bcrypt = require('bcryptjs'); //used to hash passwords
+const salt = bcrypt.genSaltSync(10); //creates salt to SUPER hash password using append salt.
+const { urlsForUser, findUserByEmail, generateRandomString } = require("./helper");
 
-
-const { get } = require("express/lib/response"); //Dont remember writing this line :(
 
 //config
-app.set("view engine", "ejs");
-
-
+app.set("view engine", "ejs"); //Just so we can use ejs files
 
 
 
@@ -32,6 +29,17 @@ app.use(cookieSession({
 }));
 
 
+//
+//FUNCTION THAT I CANT EXPORT CORRECTLY
+//
+// const generateRandomString = () => {
+//   const chara = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+//   let string = "";
+//   for (let i = 0; i < 6; i++) {
+//     string += chara.charAt(Math.floor(Math.random() * chara.length));
+//   }
+//   return string;
+// };
 
 
 //
@@ -51,47 +59,15 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "123"
+    password: bcrypt.hashSync("123", salt)
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "123"
+    password: bcrypt.hashSync("123", salt)
   }
 };
 
-
-//
-//Functions
-//
-
-
-const urlsForUser = (loginid, urlDatabase) => {
-  let matchingURLS = [];
-  for (const shorturl in urlDatabase) {
-    if (urlDatabase[shorturl].userID === loginid) {
-      matchingURLS.push(shorturl);
-    }
-  }
-  return matchingURLS;
-};
-const findUserByEmail = (loginemail, database) => {
-  for (const userIDS in database) {
-    if (database[userIDS].email === loginemail) {
-      return database[userIDS];
-    }
-  }
-  return null;
-};
-
-const generateRandomString = () => {
-  const chara = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let string = "";
-  for (let i = 0; i < 6; i++) {
-    string += chara.charAt(Math.floor(Math.random() * chara.length));
-  }
-  return string;
-};
 
 
 
@@ -141,7 +117,7 @@ app.post("/register", (req, res) => {
       message: "Error: Status code 401. Please enter Email & Password.",
       email: email
     };
-    res.render("textpages", templateVars);
+    return res.render("textpages", templateVars);
   }
   for (const userIDS in users) {
     if (users[userIDS].email === email) {
@@ -149,7 +125,7 @@ app.post("/register", (req, res) => {
         message: "Error: Status code 401. Email is already registered.",
         email: email
       };
-      res.render("textpages", templateVars);
+      return res.render("textpages", templateVars);
     }
   }
   let newID = generateRandomString();
@@ -181,6 +157,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const user = findUserByEmail(email, users);
   if (!email || !password) {
     const templateVars = {
       message: "Email or password cannot be blank. Error: Status code 401",
@@ -188,23 +165,22 @@ app.post("/login", (req, res) => {
     };
     res.render("textpages", templateVars);
   }
-  const user = findUserByEmail(email, users);
   if (!user) {
     const templateVars = {
       message: "Error: Status code 401 Email not registered.",
-      email: email
+      email: null
     };
     res.render("textpages", templateVars);
   }
-  if (bcrypt.compareSync(user.password, password)) {
+  if (!bcrypt.compareSync(password, user.password)) {
     const templateVars = {
       message: "Error: Status code 401 Password.",
-      email: email
+      email: null
     };
-    res.render("textpages", templateVars);
+    return res.render("textpages", templateVars);
   }
   
-  req.session.user_id = user.id;//sending back encrypted cookie
+  req.session.user_id = user.id;//sending back encrypted cookie and sets it for this session
   res.redirect('/urls');
 });
 
@@ -274,7 +250,7 @@ app.get("/urls/:shortURL", (req, res) => {
   for (const knownID in users) {
     if (getID === knownID) {
       const templateVars = { shortURL: tinyURL, longURL: urlDatabase[tinyURL].longURL, email: users[getID].email};
-      res.render("urlsShow", templateVars);
+      return res.render("urlsShow", templateVars);
     }
   }
   const templateVars = {
@@ -295,22 +271,22 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:shortURL/edit", (req, res) => {
+
+  //TODO: Check session id
+
   const { shortURL} = req.params;
-  console.log("short url:", urlDatabase[shortURL]);
   const { newURL } = req.body;
-  console.log("newURL", newURL);
   urlDatabase[shortURL].longURL = newURL;
   res.redirect('/urls');
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const currentUserID = req.session.user_id;
-  const checkUserCanDelete = urlsForUser(currentUserID, urlDatabase);
-  for (const validURL of checkUserCanDelete) {
-    if (validURL === req.params.shortURL) {
-      delete urlDatabase[req.params.shortURL];
-      res.redirect("/urls");
-    }
+  const { shortURL } = req.params;
+  const shortID = urlDatabase[shortURL].userID;
+  if (shortID === currentUserID) {
+    delete urlDatabase[shortID];
+    res.redirect("/urls");
   }
   const templateVars = {
     message: "Error: Status code 403. Not authorised to this user.",
@@ -324,7 +300,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
-
+//js object notation global standard for sending data over http object to string
+// Returns
 //catch error
 app.get("/*", (req, res) => {
   res.render("error404");
