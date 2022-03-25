@@ -2,10 +2,12 @@
 ## General info
 A full stack web app built with Node and Express that allows users to shorten long URLs. This app is for educational purposes only. 
 ## Technologies
-Project is created with:
-Node (engine),
-EJS (view engine),
-Express (web framework)
+- Node.js
+- Express
+- EJS
+- bcrypt
+- body-parser
+- cookie-session
 
 ## Setup
 To run this project, install it locally using npm:
