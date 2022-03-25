@@ -115,7 +115,7 @@ app.post("/register", (req, res) => {
       password === "") {
     const templateVars = {
       message: "Error: Status code 401. Please enter Email & Password.",
-      email: email
+      email: null
     };
     return res.render("textpages", templateVars);
   }
@@ -123,7 +123,7 @@ app.post("/register", (req, res) => {
     if (users[userIDS].email === email) {
       const templateVars = {
         message: "Error: Status code 401. Email is already registered.",
-        email: email
+        email: null
       };
       return res.render("textpages", templateVars);
     }
@@ -167,14 +167,14 @@ app.post("/login", (req, res) => {
   }
   if (!user) {
     const templateVars = {
-      message: "Error: Status code 401 Email not registered.",
+      message: "Error: Status code 401 Email not registered. Might not show this message in real life, indicates user exists.",
       email: null
     };
     res.render("textpages", templateVars);
   }
   if (!bcrypt.compareSync(password, user.password)) {
     const templateVars = {
-      message: "Error: Status code 401 Password.",
+      message: "Error: Status code 401 Password. In real life situations would not indicate they had the correct email.",
       email: null
     };
     return res.render("textpages", templateVars);
@@ -235,7 +235,11 @@ app.get('/urls/new', (req, res) => {
     };
     res.render("urlsNew", templateVars);
   } else {
-    res.redirect("/login");
+    const templateVars = {
+      message: "Error: Status code 403. PLease login to view.",
+      email: null
+    };
+    res.render("textpages", templateVars);
   }
 });
 app.post("/urls/:shortURL/edit", (req, res) => {
@@ -254,7 +258,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   const { shortURL } = req.params;
   const shortID = urlDatabase[shortURL].userID;
   if (shortID === currentUserID) {
-    delete urlDatabase[shortID];
+    delete urlDatabase[shortURL];
     return  res.redirect("/urls");
   }
   const templateVars = {
