@@ -1,11 +1,10 @@
-//// maybe try exports. might have to add databases here too? Could just export and require in server?
-
-
 const urlsForUser = (loginid, urlDatabase) => {
-  let matchingURLS = [];
+  let matchingURLS = {};
+  console.log("loginid", loginid);
   for (const shorturl in urlDatabase) {
-    if (urlDatabase[shorturl].userID === loginid) {
-      matchingURLS.push(shorturl);
+    console.log("inside urls for user", urlDatabase[shorturl].userID);
+    if (urlDatabase[shorturl].userID == loginid) { //this is looking at an array vs a string
+      matchingURLS[shorturl] = urlDatabase[shorturl];
     }
   }
   return matchingURLS;
@@ -19,7 +18,17 @@ const findUserByEmail = (loginemail, database) => {
   return null;
 };
 
+const generateRandomString = () => {
+  const chara = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let string = "";
+  for (let i = 0; i < 6; i++) {
+    string += chara.charAt(Math.floor(Math.random() * chara.length));
+  }
+  return string;
+};
+
 module.exports = {
   findUserByEmail,
-  urlsForUser
+  urlsForUser,
+  generateRandomString
 };

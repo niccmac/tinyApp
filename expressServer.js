@@ -134,7 +134,7 @@ app.post("/register", (req, res) => {
     email,
     password: bcrypt.hashSync(password, salt)
   };//Creates new user
-  // req.session.user_id = (newID);//Creates session cookie with id same as new user reg.
+  req.session.userId = (newID);//Creates session cookie with id same as new user reg.
   res.redirect("/urls");
 });
 
@@ -180,7 +180,7 @@ app.post("/login", (req, res) => {
     return res.render("textpages", templateVars);
   }
   
-  req.session.user_id = user.id;//sending back encrypted cookie and sets it for this session
+  req.session.userId = user.id;//sending back encrypted cookie and sets it for this session
   res.redirect('/urls');
 });
 
@@ -194,16 +194,14 @@ app.post("/logout", (req, res) => {
 
 ///urls routes
 app.get("/urls", (req, res) => {
-  let userCoookieID = req.session.user_id;
-  for (const knownID in users) {
-    if (userCoookieID === knownID) {
-      let email = users[userCoookieID].email;
-      const templateVars = {
-        urls: urlDatabase,
-        email: email
-      };
-      return res.render("urlsIndex", templateVars);
-    }
+  if (req.session.userId) {
+    let userCoookieID = req.session.userId;
+    const urlsList = urlsForUser([userCoookieID], urlDatabase);
+    let email = users[userCoookieID].email;
+    const templateVars = {
+      urls: urlsList,
+      email: email};
+    return res.render("urlsIndex", templateVars);
   }
   const templateVars = {
     message: "Must be logged in to view. Error: Status code 401.",
@@ -221,7 +219,7 @@ app.post("/urls", (req, res) => {
   let newShort = generateRandomString();
   urlDatabase[newShort] = {
     longURL: newLong,
-    userID: req.session.user_id
+    userID: req.session.userId
   };
   res.redirect(`/urls/${newShort}`);
 });
@@ -229,9 +227,9 @@ app.post("/urls", (req, res) => {
 //urls new routes
 
 app.get('/urls/new', (req, res) => {
-  let getID = req.session.user_id;
-  if (req.session.user_id) {
-    const user = users[req.session.user_id];
+  let getID = req.session.userId;
+  if (req.session.userId) {
+    const user = users[req.session.userId];
     const templateVars = {
       email: user.email
     };
@@ -240,36 +238,6 @@ app.get('/urls/new', (req, res) => {
     res.redirect("/login");
   }
 });
-
-
-
-//urls short routes //this is catching users who try to login from the URLS page, dont know how to fix
-app.get("/urls/:shortURL", (req, res) => {
-  let getID = req.session.user_id;
-  let tinyURL = req.params.shortURL;
-  for (const knownID in users) {
-    if (getID === knownID) {
-      const templateVars = { shortURL: tinyURL, longURL: urlDatabase[tinyURL].longURL, email: users[getID].email};
-      return res.render("urlsShow", templateVars);
-    }
-  }
-  const templateVars = {
-    message: "Must be logged in to view... Error: Status code 401.",
-    email: null
-  };
-  res.render("textpages", templateVars);
-
-});
-
-app.get("/u/:shortURL", (req, res) => {
-  let url = urlDatabase[req.params.shortURL];
-  if (!url) {
-    return res.redirect("/*");
-  }
-  const templateVars = { shortURL: req.params.shortURL, longURL: url.longURL};
-  res.redirect(templateVars.longURL);
-});
-
 app.post("/urls/:shortURL/edit", (req, res) => {
 
   //TODO: Check session id
@@ -281,12 +249,13 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const currentUserID = req.session.user_id;
+  console.log("form attempted submit - error in server");
+  const currentUserID = req.session.userId;
   const { shortURL } = req.params;
   const shortID = urlDatabase[shortURL].userID;
   if (shortID === currentUserID) {
     delete urlDatabase[shortID];
-    res.redirect("/urls");
+    return  res.redirect("/urls");
   }
   const templateVars = {
     message: "Error: Status code 403. Not authorised to this user.",
@@ -294,6 +263,54 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   };
   res.render("textpages", templateVars);
 });
+
+
+//urls short routes //DO have to be logged in to view
+app.get("/urls/:shortURL", (req, res) => {
+  if (req.session.userId) {
+    let { userId: userId } = req.session;
+    let { shortURL } = req.params;
+    let email = users[userId].email;
+    if (!urlDatabase[shortURL]) {
+      const templateVars = {
+        message: "This URL does not exist. Error: Status code 404.",
+        email
+      };
+      res.render("textpages", templateVars);
+    } else if (urlDatabase[shortURL].userID !== userId) {
+      const templateVars = {
+        message: "Cannot access URL. Error: Status code 401.",
+        email
+      };
+      res.render("textpages", templateVars);
+    } else {
+      const templateVars = {
+        shortURL: shortURL,
+        longURL: urlDatabase[shortURL].longURL,
+        email
+      };
+      return res.render("urlsShow", templateVars);
+    }
+  }
+  const templateVars = {
+    email: null
+  };
+  return res.render("login", templateVars);
+  
+});
+
+
+app.get("/u/:shortURL", (req, res) => {
+  let url = urlDatabase[req.params.shortURL];
+  if (!url) {
+    return res.redirect("/*");
+  }
+  const templateVars = { shortURL: req.params.shortURL, longURL: url.longURL};
+  return res.redirect(templateVars.longURL);
+  
+});
+
+
 
 //urls with json
 
